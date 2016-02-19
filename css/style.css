@@ -1,0 +1,38 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+header {
+  margin-bottom: 20px;
+}
+
+h1 {
+  text-align: center;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+img {
+  display: block;
+  margin: 0 auto;
+}
+
+#controls {
+  text-align: center;
+}
+
+#container {
+  text-align: center;
+}
+
+svg {
+  vertical-align: top;
+}
