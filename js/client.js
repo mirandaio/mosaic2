@@ -98,29 +98,29 @@ function getTile(tileData) {
  * @returns {string} The average RGB values in hexadecimal format
 */
 function averageColor(tileData) {
-  var redAvg = average(tileData, 0);
-  var greenAvg = average(tileData, 1);
-  var blueAvg = average(tileData, 2);
+  var len = tileData.length;
+  var numPixels = len / 4;
+  var redTotal = 0, greenTotal = 0, blueTotal = 0;
+  var redAvg, greenAvg, blueAvg;
+  var i;
+  for(i = 0; i < len; i+=4) {
+    redTotal += tileData[i];
+    greenTotal += tileData[i+1];
+    blueTotal += tileData[i+2];
+  }
+  redAvg = getHexString(redTotal / numPixels);
+  greenAvg = getHexString(greenTotal / numPixels);
+  blueAvg = getHexString(blueTotal / numPixels);
   return redAvg + greenAvg + blueAvg;
 }
 
 /**
- * @param {Uint8ClampedArray} data - the RGBA values of a canvas tile
- * @param {Number} i - represents what color component to average
- * @returns {string} average value of the color component in hexadecimal
- */
-function average(data, i) {
-  var avg;
-  var total = 0;
-  var len = data.length;
-  var numPixels = len / 4;
-  while(i < len) {
-    total += data[i];
-    i+=4;
-  }
-  avg = Math.floor(total / numPixels);
-  // Make sure the average is a two digit hexadecimal value
-  return avg < 16 ? '0' + avg.toString(16) : avg.toString(16);
+ * @param {Number} n - a Number in the range of 0-255
+ * @returns {String} a two digit hexidecimal string
+*/
+function getHexString(n) {
+  n = Math.floor(n);
+  return n < 16 ? '0' + n.toString(16) : n.toString(16);
 }
 
 /**
