@@ -80,16 +80,6 @@
   }
 
   /**
-   * Computes a tile size that makes a tile with offset fit within canvasSize
-   * @param {Number} offset - The offset of the tile relative to the canvas
-   * @param {Number} canvasSize - the canvas size
-   * @param {Number} tileSize - the max posible value for the tile
-   */
-  function getValidSize(offset, canvasSize, tileSize) {
-    return offset + tileSize > canvasSize ? canvasSize - offset : tileSize;
-  }
-
-  /**
    * Computes the average color of a canvas tile and returns a promise that
    * resolves when the HTTP call to get the SVG tile completes
    * @param {Uint8ClampedArray} tileData - the RGBA values of a canvas tile
@@ -104,6 +94,16 @@
       };
       xhr.send();
     });
+  }
+
+  /**
+   * Computes a tile size that makes a tile with offset fit within canvasSize
+   * @param {Number} offset - The offset of the tile relative to the canvas
+   * @param {Number} canvasSize - the canvas size
+   * @param {Number} tileSize - the max posible value for the tile
+   */
+  function getValidSize(offset, canvasSize, tileSize) {
+    return offset + tileSize > canvasSize ? canvasSize - offset : tileSize;
   }
 
   /**
