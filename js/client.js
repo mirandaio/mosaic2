@@ -60,15 +60,15 @@
     return new Promise(function(resolve, reject) {
       var x;
       var tileData;
-      var width, height;
+      var tileWidth;
+      var tileHeight = getValidSize(y, canvasHeight, TILE_HEIGHT);
       var canvasWidth = canvas.width;
       var canvasHeight = canvas.height;
       var context = canvas.getContext('2d');
       var promises = [];
       for(x = 0; x < canvasWidth; x += TILE_WIDTH) {
-        width = x + TILE_WIDTH > canvasWidth ? canvasWidth - x : TILE_WIDTH;
-        height = y+TILE_HEIGHT > canvasHeight ? canvasHeight - y : TILE_HEIGHT;
-        tileData = context.getImageData(x, y, width, height).data;
+        tileWidth = getValidSize(x, canvasWidth, TILE_WIDTH);
+        tileData = context.getImageData(x, y, tileWidth, tileHeight).data;
         promises.push(getTile(tileData));
       }
       Promise.all(promises).then(function(tiles) {
@@ -77,6 +77,16 @@
         resolve(row);
       });
     });
+  }
+
+  /**
+   * Computes a tile size that makes a tile with offset fit within canvasSize
+   * @param {Number} offset - The offset of the tile relative to the canvas
+   * @param {Number} canvasSize - the canvas size
+   * @param {Number} tileSize - the max posible value for the tile
+   */
+  function getValidSize(offset, canvasSize, tileSize) {
+    return offset + tileSize > canvasSize ? canvasSize - offset : tileSize;
   }
 
   /**
@@ -98,7 +108,7 @@
 
   /**
    * @param {Uint8ClampedArray} tileData - the RGBA values of a canvas tile
-   * @returns {string} The average RGB values in hexadecimal format
+   * @returns {String} The average RGB values in hexadecimal format
    */
   function averageColor(tileData) {
     var len = tileData.length;
