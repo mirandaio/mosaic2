@@ -1,16 +1,16 @@
 (function(window) {
   window.onload = function() {
+    var img = document.getElementById('source');
     var canvas = document.createElement('canvas');
-    var context = canvas.getContext('2d');
     var container = document.getElementById('container');
     var button = document.getElementById('process');
 
     document.querySelector('input').addEventListener('change', function(e) {
-      setupImageAndCanvas(e, canvas, context, button, container);
+      setupImageAndCanvas(e, img, canvas, button);
     });
 
     button.addEventListener('click', function() {
-      processPhoto(canvas, context, container);
+      processPhoto(canvas, container);
     });
   };
 
@@ -21,11 +21,10 @@
    * @param {CanvasRenderingContext} context - the context of the canvas
    * @param {Div} container - a div element
    */
-  function processPhoto(canvas, context, container) {
+  function processPhoto(canvas, container) {
     var y;
-    var rowPromises = [];
-    var canvasWidth = canvas.width;
     var canvasHeight = canvas.height;
+    var rowPromises = [];
     var rowIndexes = [];
     // remove childs from container, if any
     while(container.firstChild) {
@@ -39,7 +38,7 @@
     // Start the getRow promises all at once and display their
     // resolved values as soon they become available maintaining order
     rowIndexes.map(function(rowIndex) {
-      return getRow(context, rowIndex, canvasWidth, canvasHeight);
+      return getRow(canvas, rowIndex);
     }).reduce(function(sequence, rowPromise) {
       return sequence.then(function() {
         return rowPromise.then(function(row) {
@@ -57,11 +56,14 @@
    * @param {Number} canvasWidth - the width of the canvas
    * @param {Number} canvasHeight - the height of the canvas
    */
-  function getRow(context, y, canvasWidth, canvasHeight) {
+  function getRow(canvas, y) {
     return new Promise(function(resolve, reject) {
       var x;
-      var width, height;
       var tileData;
+      var width, height;
+      var canvasWidth = canvas.width;
+      var canvasHeight = canvas.height;
+      var context = canvas.getContext('2d');
       var promises = [];
       for(x = 0; x < canvasWidth; x += TILE_WIDTH) {
         width = x + TILE_WIDTH > canvasWidth ? canvasWidth - x : TILE_WIDTH;
@@ -128,10 +130,10 @@
    * Puts the data of the uploaded file into the image element, and into the
    * canvas element
    */
-  function setupImageAndCanvas(e, canvas, context, button, container) {
+  function setupImageAndCanvas(e, img, canvas, button) {
     var reader = new FileReader();
+    var context = canvas.getContext('2d');
     reader.onload = function(evt) {
-      var img = document.getElementById('source');
       img.onload = function() {
         canvas.width = img.clientWidth;
         canvas.height = img.clientHeight;
