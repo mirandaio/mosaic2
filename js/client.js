@@ -25,21 +25,18 @@
     var y;
     var canvasHeight = canvas.height;
     var rowPromises = [];
-    var rowIndexes = [];
     // remove childs from container, if any
     while(container.firstChild) {
       container.removeChild(container.firstChild);
     }
-    // Store all the row indexes into rowIndexes
+    // fire up the getRow promises in parallel
     for(y = 0; y < canvasHeight; y += TILE_HEIGHT) {
-      rowIndexes.push(y);
+      rowPromises.push(getRow(canvas, y));
     }
 
-    // Start the getRow promises all at once and display their
-    // resolved values as soon they become available maintaining order
-    rowIndexes.map(function(rowIndex) {
-      return getRow(canvas, rowIndex);
-    }).reduce(function(sequence, rowPromise) {
+    // display the row promises resolved values as soon they become available
+    // maintaining order
+    rowPromises.reduce(function(sequence, rowPromise) {
       return sequence.then(function() {
         return rowPromise.then(function(row) {
           container.appendChild(row);
