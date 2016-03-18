@@ -1,4 +1,4 @@
-(function(window) {
+(function(window, document) {
   window.onload = function() {
     var img = document.getElementById('source');
     var canvas = document.createElement('canvas');
@@ -23,7 +23,9 @@
    */
   function processPhoto(canvas, container) {
     var y;
+    var ctx = canvas.getContext('2d');
     var canvasHeight = canvas.height;
+    var imgData = ctx.getImageData(0, 0, canvas.width, canvasHeight);
     var rowPromises = [];
     // remove childs from container, if any
     while(container.firstChild) {
@@ -31,7 +33,7 @@
     }
     // fire up the getRow promises in parallel
     for(y = 0; y < canvasHeight; y += TILE_HEIGHT) {
-      rowPromises.push(getRow(canvas, y));
+      rowPromises.push(getRow(imgData, y));
     }
 
     // display the row promises resolved values as soon they become available
@@ -45,92 +47,23 @@
     }, Promise.resolve());
   }
 
-  /**
-   * Returns a promise that resolves to a div element containing all the tiles
-   * for a particular row.
-   * @param {CanvasRenderingContext} context - The context of a canvas
-   * @param {Number} y - the vertical position of a row relative to the canvas
-   * @param {Number} canvasWidth - the width of the canvas
-   * @param {Number} canvasHeight - the height of the canvas
-   */
-  function getRow(canvas, y) {
+  function getRow(imgData, y) {
     return new Promise(function(resolve, reject) {
-      var x;
-      var tileData;
-      var tileWidth;
-      var tileHeight = getValidSize(y, canvasHeight, TILE_HEIGHT);
-      var canvasWidth = canvas.width;
-      var canvasHeight = canvas.height;
-      var context = canvas.getContext('2d');
-      var promises = [];
-      for(x = 0; x < canvasWidth; x += TILE_WIDTH) {
-        tileWidth = getValidSize(x, canvasWidth, TILE_WIDTH);
-        tileData = context.getImageData(x, y, tileWidth, tileHeight).data;
-        promises.push(getTile(tileData));
-      }
-      Promise.all(promises).then(function(tiles) {
+      var rowWorker = new Worker('js/row-worker.js');
+
+      rowWorker.addEventListener('message', function(e) {
         var row = document.createElement('div');
-        row.innerHTML = tiles.join('');
+        row.innerHTML = e.data.join('');
         resolve(row);
       });
+
+      rowWorker.postMessage({
+        imgData: imgData,
+        TILE_WIDTH: TILE_WIDTH,
+        TILE_HEIGHT: TILE_HEIGHT,
+        y: y
+      });
     });
-  }
-
-  /**
-   * Computes the average color of a canvas tile and returns a promise that
-   * resolves when the HTTP call to get the SVG tile completes
-   * @param {Uint8ClampedArray} tileData - the RGBA values of a canvas tile
-   */
-  function getTile(tileData) {
-    return new Promise(function(resolve, reject) {
-      var avgColor = averageColor(tileData);
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', '/color/' + avgColor);
-      xhr.onload = function() {
-        resolve(xhr.responseText);
-      };
-      xhr.send();
-    });
-  }
-
-  /**
-   * Computes a tile size that makes a tile with offset fit within canvasSize
-   * @param {Number} offset - The offset of the tile relative to the canvas
-   * @param {Number} canvasSize - the canvas size
-   * @param {Number} tileSize - the max posible value for the tile
-   */
-  function getValidSize(offset, canvasSize, tileSize) {
-    return offset + tileSize > canvasSize ? canvasSize - offset : tileSize;
-  }
-
-  /**
-   * @param {Uint8ClampedArray} tileData - the RGBA values of a canvas tile
-   * @returns {String} The average RGB values in hexadecimal format
-   */
-  function averageColor(tileData) {
-    var len = tileData.length;
-    var numPixels = len / 4;
-    var redTotal = 0, greenTotal = 0, blueTotal = 0;
-    var redAvg, greenAvg, blueAvg;
-    var i;
-    for(i = 0; i < len; i+=4) {
-      redTotal += tileData[i];
-      greenTotal += tileData[i+1];
-      blueTotal += tileData[i+2];
-    }
-    redAvg = getHexString(redTotal / numPixels);
-    greenAvg = getHexString(greenTotal / numPixels);
-    blueAvg = getHexString(blueTotal / numPixels);
-    return redAvg + greenAvg + blueAvg;
-  }
-
-  /**
-   * @param {Number} n - a Number in the range of 0-255
-   * @returns {String} a two digit hexidecimal string
-   */
-  function getHexString(n) {
-    n = Math.floor(n);
-    return n < 16 ? '0' + n.toString(16) : n.toString(16);
   }
 
   /**
@@ -151,4 +84,4 @@
     };
     reader.readAsDataURL(e.target.files[0]);
   }
-})(window);
+})(window, document);
