@@ -33,6 +33,6 @@ img {
   text-align: center;
 }
 
-svg {
-  vertical-align: top;
+#container > div {
+  line-height: 0;
 }
