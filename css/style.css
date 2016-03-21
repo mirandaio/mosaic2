@@ -16,17 +16,30 @@ h1 {
   text-align: center;
 }
 
+#controls {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
 .invisible {
   visibility: hidden;
+}
+
+#drop-zone {
+  margin: 0 auto;
+  width: 340px;
+  height: 340px;
+  text-align: center;
+  line-height: 340px;
+}
+
+.none {
+  display: none;
 }
 
 img {
   display: block;
   margin: 0 auto;
-}
-
-#controls {
-  text-align: center;
 }
 
 #container {
@@ -35,4 +48,12 @@ img {
 
 #container > div {
   line-height: 0;
+}
+
+.empty {
+  border: 10px dashed #50b7c8;
+}
+
+.full {
+  border: 10px dashed rgb(117, 254, 4);
 }
