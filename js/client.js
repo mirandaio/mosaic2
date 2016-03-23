@@ -7,7 +7,11 @@
     var dropZone = document.getElementById('drop-zone');
 
     document.querySelector('input').addEventListener('change', function(e) {
-      setupImageAndCanvas(e.target.files[0], img, canvas, button, dropZone);
+      setupUI(e.target.files[0], img, canvas, button, dropZone);
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+      setupUI(e.dataTransfer.files[0], img, canvas, button, dropZone);
     });
 
     dropZone.addEventListener('dragenter', function() {
@@ -19,14 +23,7 @@
       this.classList.remove('full');
       this.classList.add('empty');
     });
-
-    dropZone.addEventListener('drop', function(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      var file = e.dataTransfer.files[0];
-      setupImageAndCanvas(file, img, canvas, button, dropZone);
-    });
-
+    
     button.addEventListener('click', function() {
       processPhoto(canvas, container);
     });
@@ -91,23 +88,31 @@
     });
   }
 
-  /**
-   * Puts the data of the uploaded file into the image element, and into the
-   * canvas element
-   */
-  function setupImageAndCanvas(file, img, canvas, button, dropZone) {
-    var reader = new FileReader();
-    var context = canvas.getContext('2d');
-    reader.onload = function(evt) {
-      img.onload = function() {
-        canvas.width = img.clientWidth;
-        canvas.height = img.clientHeight;
-        context.drawImage(img, 0, 0, canvas.width, canvas.height);
-        button.classList.remove('invisible');
-        dropZone.classList.add('none');
+  function setupUI(file, img, canvas, button, dropZone) {
+    setupImage(file, img).then(function() {
+      setupCanvas(img, canvas);
+      button.classList.remove('invisible');
+      dropZone.classList.add('none');
+    });
+  }
+
+  function setupImage(file, img) {
+    return new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        img.onload = function() {
+          resolve();
+        };
+        img.src = e.target.result;
       };
-      img.src = evt.target.result;
-    };
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function setupCanvas(img, canvas) {
+    var ctx = canvas.getContext('2d');
+    canvas.width = img.clientWidth;
+    canvas.height = img.clientHeight;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   }
 })(window, document);
