@@ -45,46 +45,61 @@
    * @param {Div} container - a div element
    */
   function processPhoto(canvas, container) {
-    var y;
-    var ctx = canvas.getContext('2d');
-    var canvasHeight = canvas.height;
-    var imgData = ctx.getImageData(0, 0, canvas.width, canvasHeight);
-    var rowPromises = [];
-    // remove childs from container, if any
-    while(container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
-    // fire up the getRow promises in parallel
-    for(y = 0; y < canvasHeight; y += TILE_HEIGHT) {
-      rowPromises.push(getRow(imgData, y));
-    }
-    // display the row promises resolved values as soon they become available
-    // maintaining order
-    rowPromises.reduce(function(sequence, rowPromise) {
-      return sequence.then(function() {
-        return rowPromise.then(function(row) {
-          container.appendChild(row);
-        });
+    getColorMatrix(canvas).then(function(colorMatrix) {
+      var rowPromises = colorMatrix.map(function(colorRow) {
+        return getRow(colorRow);
       });
-    }, Promise.resolve());
+
+      rowPromises.reduce(function(sequence, rowPromise) {
+        return sequence.then(function() {
+          return rowPromise.then(function(row) {
+            container.appendChild(row);
+          });
+        });
+      }, Promise.resolve());
+    });
   }
 
-  function getRow(imgData, y) {
+  function getColorMatrix(canvas) {
     return new Promise(function(resolve, reject) {
-      var rowWorker = new Worker('js/row-worker.js');
+      var ctx = canvas.getContext('2d');
+      var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      var imgWorker = new Worker('js/img-worker.js');
 
-      rowWorker.addEventListener('message', function(e) {
-        var row = document.createElement('div');
-        row.innerHTML = e.data.join('');
-        resolve(row);
+      imgWorker.addEventListener('message', function(e) {
+        resolve(e.data);
       });
 
-      rowWorker.postMessage({
+      imgWorker.postMessage({
         imgData: imgData,
         TILE_WIDTH: TILE_WIDTH,
-        TILE_HEIGHT: TILE_HEIGHT,
-        y: y
+        TILE_HEIGHT: TILE_HEIGHT
       });
+    });
+  }
+
+  function getRow(colorRow) {
+    return new Promise(function(resolve, reject) {
+      var promises = colorRow.map(function(color) {
+        return getTile(color);
+      });
+
+      Promise.all(promises).then(function(tiles) {
+        var row = document.createElement('div');
+        row.innerHTML = tiles.join('');
+        resolve(row);
+      });
+    });
+  }
+
+  function getTile(color) {
+    return new Promise(function(resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/color/' + color);
+      xhr.onload = function() {
+        resolve(xhr.responseText);
+      };
+      xhr.send();
     });
   }
 

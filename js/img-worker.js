@@ -1,36 +1,25 @@
 self.addEventListener('message', function(e) {
-  var x;
-  var y = e.data.y;
   var imgData = e.data.imgData;
-  var canvasWidth = imgData.width;
   var TILE_WIDTH = e.data.TILE_WIDTH;
   var TILE_HEIGHT = e.data.TILE_HEIGHT;
-  var tileHeight = getValidSize(y, imgData.height, TILE_HEIGHT);
-  var tileWidth;
-  var promises = [];
-
-  for(x = 0; x < canvasWidth; x += TILE_WIDTH) {
-    tileWidth = getValidSize(x, canvasWidth, TILE_WIDTH);
-    promises.push(getTile(imgData, x, y, tileWidth, tileHeight));
+  var imgWidth = imgData.width;
+  var imgHeight = imgData.height;
+  var colorMatrix = [];
+  var colorRow;
+  var x, y;
+  var tileWith, tileHeight;
+  for(y = 0; y < imgHeight; y += TILE_HEIGHT) {
+    tileHeight = getValidSize(y, imgData.height, TILE_HEIGHT);
+    colorRow = [];
+    for(x = 0; x < imgWidth; x += TILE_WIDTH) {
+      tileWidth = getValidSize(x, imgData.width, TILE_WIDTH);
+      colorRow.push(averageColor(imgData, x, y, tileWidth, tileHeight));
+    }
+    colorMatrix.push(colorRow);
   }
-
-  Promise.all(promises).then(function(tiles) {
-    self.postMessage(tiles);
-    self.close();
-  });
+  self.postMessage(colorMatrix);
+  self.close();
 });
-
-function getTile(imgData, x, y, tileWidth, tileHeight) {
-  return new Promise(function(resolve, reject) {
-    var avgColor = averageColor(imgData, x, y, tileWidth, tileHeight);
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/color/' + avgColor);
-    xhr.onload = function() {
-      resolve(xhr.responseText);
-    };
-    xhr.send();
-  });
-}
 
 function averageColor(imgData, x, y, tileWidth, tileHeight) {
   var row, col;
